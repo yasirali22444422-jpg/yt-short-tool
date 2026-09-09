@@ -59,8 +59,8 @@ export default function ProjectsList({ onEmpty }: { onEmpty?: () => void }) {
         );
       default:
         return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-brand-500/10 text-brand-400 border border-brand-500/20">
-            <Loader2 className="w-3 h-3 animate-spin" />
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[rgba(255,85,0,0.12)] text-[#ff7722] border border-[rgba(255,85,0,0.3)]">
+            <Loader2 className="w-3 h-3 animate-spin text-[#ff5500]" />
             Processing
           </span>
         );
@@ -70,8 +70,8 @@ export default function ProjectsList({ onEmpty }: { onEmpty?: () => void }) {
   if (loading) {
     return (
       <div className="py-24 text-center space-y-3">
-        <div className="w-7 h-7 border-2 border-brand-500 border-t-transparent rounded-full animate-spin mx-auto" />
-        <p className="text-xs text-zinc-500 font-medium">Loading projects...</p>
+        <div className="w-7 h-7 border-2 border-[#ff5500] border-t-transparent rounded-full animate-spin mx-auto" />
+        <p className="text-xs text-zinc-400 font-medium">Loading projects...</p>
       </div>
     );
   }
@@ -94,9 +94,9 @@ export default function ProjectsList({ onEmpty }: { onEmpty?: () => void }) {
   return (
     <div className="space-y-6">
       {/* Header with single "+ New Project" button */}
-      <div className="flex items-center justify-between gap-4 pb-4 border-b border-[#1f2026]">
+      <div className="flex items-center justify-between gap-4 pb-4 border-b border-[#181920]">
         <div>
-          <h1 className="text-2xl font-bold text-white tracking-tight">
+          <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
             My Projects
           </h1>
           <p className="text-xs text-zinc-400 mt-0.5">
@@ -106,9 +106,9 @@ export default function ProjectsList({ onEmpty }: { onEmpty?: () => void }) {
 
         <Link
           href="/new"
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-500 active:bg-brand-700 text-white text-xs sm:text-sm font-semibold shadow-md shadow-brand-600/20 transition-all"
+          className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#ff5500] hover:bg-[#e64a00] active:bg-[#cc3f00] text-white text-xs sm:text-sm font-bold shadow-[0_0_20px_rgba(255,85,0,0.25)] border border-[#ff7733]/30 transition-all duration-150"
         >
-          <Plus className="w-4 h-4" />
+          <Plus className="w-4 h-4 stroke-[2.5]" />
           <span>+ New Project</span>
         </Link>
       </div>
@@ -119,13 +119,14 @@ export default function ProjectsList({ onEmpty }: { onEmpty?: () => void }) {
           <Link
             key={project.id}
             href={`/projects/${project.id}`}
-            className="group flex flex-col justify-between rounded-2xl border border-[#22232a] bg-[#121318] hover:border-brand-500/50 hover:bg-[#15161d] transition-all p-4 shadow-lg"
+            className="group flex flex-col justify-between rounded-2xl border border-[#1c1d24] bg-[#0e0f14] hover:border-[#ff5500]/50 hover:bg-[#121319] hover:shadow-[0_10px_30px_rgba(0,0,0,0.8),0_0_15px_rgba(255,85,0,0.1)] transition-all duration-200 p-4 shadow-lg"
           >
             {/* Thumbnail preview area */}
-            <div className="w-full aspect-video rounded-xl bg-[#0b0c0e] border border-[#1f2026] relative overflow-hidden flex items-center justify-center group-hover:border-[#2f303a] transition-colors">
-              <div className="flex flex-col items-center gap-2 text-zinc-600 group-hover:text-brand-500 transition-colors">
+            <div className="w-full aspect-video rounded-xl bg-[#07080a] border border-[#1a1b22] relative overflow-hidden flex items-center justify-center group-hover:border-[#282934] transition-colors">
+              <div className="flex flex-col items-center gap-2 text-zinc-600 group-hover:text-[#ff5500] transition-colors">
                 <Film className="w-8 h-8" />
               </div>
+
 
               {/* Status pill overlay */}
               <div className="absolute top-2.5 right-2.5">
