@@ -1,4 +1,4 @@
-﻿from typing import Any, Optional
+from typing import Any, Optional
 from pydantic import BaseModel, Field
 
 
@@ -115,6 +115,8 @@ class SceneAnalysisData(BaseModel):
 
     confidence: dict[str, float] = Field(default_factory=dict)
     keyframe_urls: list[str] = Field(default_factory=list)
+    frames: list[dict[str, Any]] = Field(default_factory=list)
+    frame_count: int = 0
 
 
 class RemixAnalysis(BaseModel):

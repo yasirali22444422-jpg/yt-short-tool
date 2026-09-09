@@ -1,4 +1,4 @@
-﻿import json
+import json
 import logging
 from pathlib import Path
 from typing import Any, Optional
@@ -180,6 +180,22 @@ async def run_full_video_analysis(
 
         scene_summary = f"Scene {s_num:02d}: Dynamic sequence focusing on subject action with smooth cinematic motion."
 
+        # Preserve existing extracted frames from Phase 2
+        prev_frames = []
+        if scn.analysis_json:
+            try:
+                prev_json = json.loads(scn.analysis_json)
+                if isinstance(prev_json.get("frames"), list):
+                    prev_frames = prev_json["frames"]
+            except Exception:
+                pass
+
+        if not prev_frames and keyframe_urls:
+            prev_frames = [
+                {"frame_type": "keyframe", "timestamp": round(s_start, 2), "file_path": "", "relative_url": kf_url}
+                for kf_url in keyframe_urls
+            ]
+
         # Construct scene data object
         scene_data = SceneAnalysisData(
             scene_id=f"SCENE_{s_num:03d}",
@@ -221,6 +237,8 @@ async def run_full_video_analysis(
                 "lens_feel_estimated": 0.76,
             },
             keyframe_urls=keyframe_urls,
+            frames=prev_frames,
+            frame_count=len(prev_frames),
         )
 
         # 7. Compile Prompts using the Prompt Compiler

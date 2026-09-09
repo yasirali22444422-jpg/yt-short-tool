@@ -61,8 +61,46 @@ async def get_project_scenes(
 
     data = []
     for s in scenes:
-        parsed = json.loads(s.analysis_json) if s.analysis_json else {}
-        data.append(parsed)
+        parsed = {}
+        if s.analysis_json:
+            try:
+                parsed = json.loads(s.analysis_json)
+            except Exception:
+                parsed = {}
+
+        s_num = parsed.get("scene_number", s.scene_number)
+        start_t = float(parsed.get("start_time", s.start_time or 0.0))
+        end_t = float(parsed.get("end_time", s.end_time or 0.0))
+        dur = round(float(parsed.get("duration", max(0.0, end_t - start_t))), 2)
+
+        # Guarantee frames is ALWAYS a list (never None or undefined)
+        raw_frames = parsed.get("frames")
+        if not isinstance(raw_frames, list):
+            kf_urls = parsed.get("keyframe_urls") or []
+            if isinstance(kf_urls, list) and kf_urls:
+                raw_frames = [
+                    {
+                        "frame_type": "keyframe",
+                        "timestamp": start_t,
+                        "file_path": "",
+                        "relative_url": url,
+                    }
+                    for url in kf_urls
+                ]
+            else:
+                raw_frames = []
+
+        normalized_scene = {
+            **parsed,
+            "scene_number": s_num,
+            "start_time": start_t,
+            "end_time": end_t,
+            "duration": dur,
+            "frames": raw_frames,
+            "frame_count": len(raw_frames),
+            "thumbnail_url": raw_frames[0]["relative_url"] if raw_frames else parsed.get("thumbnail_url"),
+        }
+        data.append(normalized_scene)
 
     return {"project_id": project_id, "scene_count": len(data), "scenes": data}
 
