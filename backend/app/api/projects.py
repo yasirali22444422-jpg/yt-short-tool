@@ -40,6 +40,7 @@ def build_video_info(video: Optional[Video]) -> Optional[VideoInfo]:
 
 @router.get("", response_model=list[ProjectListItem])
 async def list_projects(
+    include_internal: bool = False,
     db: AsyncSession = Depends(get_db_session),
 ) -> list[ProjectListItem]:
     stmt = (
@@ -47,16 +48,42 @@ async def list_projects(
         .options(selectinload(Project.video))
         .order_by(Project.created_at.desc())
     )
+
+    if not include_internal:
+        # Exclude all internal test projects from the normal user-facing view
+        stmt = stmt.where(Project.is_internal_test == False)
+
     result = await db.execute(stmt)
     projects = result.scalars().all()
 
     items = []
     for p in projects:
+        # Extra safety check: never show test records to normal users even if flag was missing
+        if not include_internal:
+            lower_name = p.name.lower()
+            if any(k in lower_name for k in ["phase ", "test", "e2e", "sample", "mock"]):
+                continue
+
         size_mb = (
             round(p.video.file_size_bytes / (1024 * 1024), 2)
             if p.video and p.video.file_size_bytes
             else None
         )
+
+        duration_sec = None
+        formatted_dur = None
+        if p.video and p.video.metadata_json:
+            try:
+                parsed_meta = json.loads(p.video.metadata_json)
+                dur_raw = parsed_meta.get("duration_seconds")
+                if dur_raw is not None:
+                    duration_sec = round(float(dur_raw), 1)
+                    mins = int(duration_sec // 60)
+                    secs = int(duration_sec % 60)
+                    formatted_dur = f"{mins:02d}:{secs:02d}"
+            except Exception:
+                pass
+
         items.append(
             ProjectListItem(
                 id=p.id,
@@ -68,9 +95,13 @@ async def list_projects(
                 created_at=p.created_at,
                 video_filename=p.video.original_filename if p.video else None,
                 video_size_mb=size_mb,
+                video_duration_seconds=duration_sec,
+                formatted_duration=formatted_dur,
+                is_internal_test=bool(p.is_internal_test),
             )
         )
     return items
+
 
 
 @router.get("/{project_id}", response_model=ProjectResponse)

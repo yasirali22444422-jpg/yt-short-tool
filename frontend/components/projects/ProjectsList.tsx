@@ -2,7 +2,8 @@
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import { Plus, Clock, FileVideo, Film, CheckCircle2, Loader2, AlertCircle } from "lucide-react";
+import { Plus, Clock, Film, AlertCircle } from "lucide-react";
+
 import { fetchProjects } from "@/lib/api";
 import { ProjectListItem } from "@/types";
 import { formatDate } from "@/lib/utils";
@@ -34,40 +35,8 @@ export default function ProjectsList({ onEmpty }: { onEmpty?: () => void }) {
     loadProjects();
   }, []);
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case "completed":
-        return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-            Completed
-          </span>
-        );
-      case "uploaded":
-        return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-500/10 text-blue-400 border border-blue-500/20">
-            <span className="w-1.5 h-1.5 rounded-full bg-blue-400" />
-            Uploaded
-          </span>
-        );
-      case "failed":
-        return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-500/10 text-rose-400 border border-rose-500/20">
-            <span className="w-1.5 h-1.5 rounded-full bg-rose-400" />
-            Failed
-          </span>
-        );
-      default:
-        return (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[rgba(255,85,0,0.12)] text-[#ff7722] border border-[rgba(255,85,0,0.3)]">
-            <Loader2 className="w-3 h-3 animate-spin text-[#ff5500]" />
-            Processing
-          </span>
-        );
-    }
-  };
-
   if (loading) {
+
     return (
       <div className="py-24 text-center space-y-3">
         <div className="w-7 h-7 border-2 border-[#ff5500] border-t-transparent rounded-full animate-spin mx-auto" />
@@ -127,30 +96,32 @@ export default function ProjectsList({ onEmpty }: { onEmpty?: () => void }) {
                 <Film className="w-8 h-8" />
               </div>
 
-
-              {/* Status pill overlay */}
-              <div className="absolute top-2.5 right-2.5">
-                {getStatusBadge(project.status)}
-              </div>
+              {/* Video Duration Badge on Thumbnail */}
+              {project.formatted_duration && (
+                <div className="absolute bottom-2.5 right-2.5 px-2 py-0.5 rounded-md bg-black/85 backdrop-blur-sm text-[11px] font-mono font-semibold text-zinc-200 border border-white/10 shadow-sm">
+                  {project.formatted_duration}
+                </div>
+              )}
             </div>
 
-            {/* Project Details: Name, Date, Status */}
-            <div className="mt-4 space-y-1.5">
-              <h3 className="text-sm font-bold text-white tracking-tight line-clamp-1 group-hover:text-brand-400 transition-colors">
+            {/* Project Details: Name, Created Date, Video Duration */}
+            <div className="mt-4 space-y-2">
+              <h3 className="text-sm font-bold text-white tracking-tight line-clamp-1 group-hover:text-[#ff7722] transition-colors">
                 {project.name}
               </h3>
-              <div className="flex items-center justify-between text-xs text-zinc-400 pt-1 border-t border-[#1a1b22]">
-                <span className="flex items-center gap-1.5 font-mono text-[11px]">
-                  <Clock className="w-3.5 h-3.5 text-zinc-400" />
+              <div className="flex items-center justify-between text-xs text-zinc-400 pt-1.5 border-t border-[#1a1b22]">
+                <span className="flex items-center gap-1.5 font-mono text-[11px] text-zinc-400">
+                  <Clock className="w-3.5 h-3.5 text-zinc-500" />
                   {formatDate(project.created_at)}
                 </span>
                 <span className="text-[11px] font-mono text-zinc-400">
-                  {project.video_size_mb ? `${project.video_size_mb.toFixed(1)} MB` : ""}
+                  {project.formatted_duration ? `Duration: ${project.formatted_duration}` : ""}
                 </span>
               </div>
             </div>
           </Link>
         ))}
+
       </div>
     </div>
   );

@@ -43,6 +43,7 @@ class ProjectResponse(BaseModel):
     error_message: Optional[str] = None
     created_at: datetime
     updated_at: datetime
+    is_internal_test: bool = False
     video: Optional[VideoInfo] = None
 
     model_config = ConfigDict(from_attributes=True)
@@ -58,8 +59,12 @@ class ProjectListItem(BaseModel):
     created_at: datetime
     video_filename: Optional[str] = None
     video_size_mb: Optional[float] = None
+    video_duration_seconds: Optional[float] = None
+    formatted_duration: Optional[str] = None
+    is_internal_test: bool = False
 
     model_config = ConfigDict(from_attributes=True)
+
 
 
 class UploadResponse(BaseModel):

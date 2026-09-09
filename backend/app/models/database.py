@@ -28,8 +28,10 @@ class Project(Base):
     analysis_json = Column(Text, nullable=True)
     blueprint_markdown = Column(Text, nullable=True)
     remix_json = Column(Text, nullable=True)
+    is_internal_test = Column(Boolean, default=False, nullable=False)
 
     created_at = Column(DateTime(timezone=True), default=utc_now, nullable=False)
+
     updated_at = Column(DateTime(timezone=True), default=utc_now, onupdate=utc_now, nullable=False)
 
     # Relationships

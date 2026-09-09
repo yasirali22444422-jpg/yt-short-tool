@@ -46,7 +46,11 @@ export interface ProjectListItem {
   created_at: string;
   video_filename?: string | null;
   video_size_mb?: number | null;
+  video_duration_seconds?: number | null;
+  formatted_duration?: string | null;
+  is_internal_test?: boolean;
 }
+
 
 export interface UploadResponse {
   project_id: string;

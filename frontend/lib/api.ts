@@ -12,13 +12,15 @@ import {
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api";
 
-export async function fetchProjects(): Promise<ProjectListItem[]> {
-  const res = await fetch(`${API_BASE}/projects`, { cache: "no-store" });
+export async function fetchProjects(includeInternal: boolean = false): Promise<ProjectListItem[]> {
+  const url = includeInternal ? `${API_BASE}/projects?include_internal=true` : `${API_BASE}/projects`;
+  const res = await fetch(url, { cache: "no-store" });
   if (!res.ok) {
     throw new Error(`Failed to fetch projects: ${res.statusText}`);
   }
   return res.json();
 }
+
 
 export async function fetchProject(id: string): Promise<Project> {
   const res = await fetch(`${API_BASE}/projects/${id}`, { cache: "no-store" });

@@ -18,6 +18,7 @@ async def upload_video(
     analysis_mode: str = Form("detailed"),
     provider: str = Form("gemini"),
     model: str = Form("gemini-2.5-flash"),
+    is_internal_test: bool = Form(False),
     db: AsyncSession = Depends(get_db_session),
 ) -> UploadResponse:
     """
@@ -26,6 +27,12 @@ async def upload_video(
     """
     original_filename = file.filename or "video.mp4"
     display_name = name.strip() if name and name.strip() else Path(original_filename).stem
+
+    # Automatically identify if this is an automated test or demo run
+    is_test = is_internal_test or any(
+        k in display_name.lower()
+        for k in ["phase ", "test", "e2e", "sample", "mock", "acceptance"]
+    )
 
     # Save file to storage
     dest_path, file_size, unique_filename = await storage_manager.save_uploaded_video(file)
@@ -37,9 +44,11 @@ async def upload_video(
         analysis_mode=analysis_mode,
         provider=provider,
         model=model,
+        is_internal_test=is_test,
     )
     db.add(new_project)
     await db.flush()  # Populates new_project.id
+
 
     new_video = Video(
         project_id=new_project.id,

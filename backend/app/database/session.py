@@ -47,6 +47,20 @@ async def init_db() -> None:
             await conn.execute(text("ALTER TABLE projects ADD COLUMN blueprint_markdown TEXT"))
         if "remix_json" not in columns:
             await conn.execute(text("ALTER TABLE projects ADD COLUMN remix_json TEXT"))
+        if "is_internal_test" not in columns:
+            await conn.execute(text("ALTER TABLE projects ADD COLUMN is_internal_test BOOLEAN DEFAULT 0"))
+
+        # Safely flag all existing internal development & pipeline test records
+        await conn.execute(text("""
+            UPDATE projects 
+            SET is_internal_test = 1 
+            WHERE lower(name) LIKE '%phase%'
+               OR lower(name) LIKE '%test%'
+               OR lower(name) LIKE '%e2e%'
+               OR lower(name) LIKE '%sample%'
+               OR lower(name) LIKE '%mock%'
+        """))
+
 
     # Seed Master Prompt Library if not yet populated
     try:

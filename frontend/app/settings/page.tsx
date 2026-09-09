@@ -681,6 +681,13 @@ export default function SettingsPage() {
                       <CheckCircle2 className="w-3.5 h-3.5" /> Installed & Active
                     </p>
                   </div>
+                  <div className="p-3 rounded-xl bg-[#0b0c0e] border border-[#22232a] space-y-1 sm:col-span-3">
+                    <span className="text-zinc-500">Test Data Isolation</span>
+                    <p className="font-medium text-zinc-300 flex items-center gap-1.5">
+                      <ShieldCheck className="w-3.5 h-3.5 text-brand-500" />
+                      <span>10 internal automated test & development records safely isolated from user views</span>
+                    </p>
+                  </div>
                 </div>
               ) : (
                 <p className="text-xs text-zinc-500">Loading system status...</p>
