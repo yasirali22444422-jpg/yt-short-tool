@@ -7,6 +7,7 @@ from app.api.analysis import router as analysis_router
 from app.api.audio import router as audio_router
 from app.api.export import router as export_router
 from app.api.projects import router as projects_router
+from app.api.prompts import router as prompts_router
 from app.api.providers import router as providers_router
 from app.api.scenes import router as scenes_router
 from app.api.upload import router as upload_router
@@ -49,6 +50,7 @@ app.include_router(audio_router, prefix="/api")
 app.include_router(providers_router, prefix="/api")
 app.include_router(analysis_router, prefix="/api")
 app.include_router(export_router, prefix="/api")
+app.include_router(prompts_router, prefix="/api")
 
 
 @app.get("/api/health", tags=["Health"])

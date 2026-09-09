@@ -47,3 +47,11 @@ async def init_db() -> None:
             await conn.execute(text("ALTER TABLE projects ADD COLUMN blueprint_markdown TEXT"))
         if "remix_json" not in columns:
             await conn.execute(text("ALTER TABLE projects ADD COLUMN remix_json TEXT"))
+
+    # Seed Master Prompt Library if not yet populated
+    try:
+        from app.services.prompt_library import seed_prompt_library
+        async with async_session_maker() as db_session:
+            await seed_prompt_library(db_session)
+    except Exception as e:
+        print(f"Notice: Prompt library auto-seed: {e}")

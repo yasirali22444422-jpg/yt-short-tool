@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Film, FolderGit2, KeyRound, Settings, Activity } from "lucide-react";
+import { Film, FolderGit2, KeyRound, Settings, BookOpen } from "lucide-react";
 import { useEffect, useState } from "react";
 import { fetchSystemStatus } from "@/lib/api";
 
@@ -19,6 +19,7 @@ export default function Navbar() {
   const navItems = [
     { href: "/", label: "New Analysis", icon: Film },
     { href: "/projects", label: "My Projects", icon: FolderGit2 },
+    { href: "/prompts", label: "Prompt Library", icon: BookOpen },
     { href: "/providers", label: "AI Providers", icon: KeyRound },
     { href: "/settings", label: "Settings", icon: Settings },
   ];

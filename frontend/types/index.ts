@@ -226,3 +226,16 @@ export interface FullAnalysisPackage {
   blueprint_markdown: string;
   remix_data?: RemixAnalysis | null;
 }
+
+export interface PromptTemplate {
+  id: string;
+  title: string;
+  category: string;
+  description?: string | null;
+  source_file?: string | null;
+  content: string;
+  is_default: boolean;
+  created_at?: string | null;
+  updated_at?: string | null;
+}
+

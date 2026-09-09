@@ -196,3 +196,53 @@ export async function updateSceneAnalysis(
 export function getExportUrl(projectId: string, format: "json" | "markdown" | "txt"): string {
   return `${API_BASE}/projects/${projectId}/export?format=${format}`;
 }
+
+export async function fetchPromptTemplates(category?: string): Promise<import("@/types").PromptTemplate[]> {
+  const url = new URL(`${API_BASE}/prompts/templates`);
+  if (category && category !== "All") {
+    url.searchParams.set("category", category);
+  }
+  const res = await fetch(url.toString(), { cache: "no-store" });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ detail: res.statusText }));
+    throw new Error(err.detail || "Failed to fetch prompt templates");
+  }
+  return res.json();
+}
+
+export async function fetchPromptTemplate(id: string): Promise<import("@/types").PromptTemplate> {
+  const res = await fetch(`${API_BASE}/prompts/templates/${id}`, { cache: "no-store" });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ detail: res.statusText }));
+    throw new Error(err.detail || "Failed to fetch prompt template");
+  }
+  return res.json();
+}
+
+export async function updatePromptTemplate(
+  id: string,
+  updates: Partial<import("@/types").PromptTemplate>
+): Promise<import("@/types").PromptTemplate> {
+  const res = await fetch(`${API_BASE}/prompts/templates/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(updates),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ detail: res.statusText }));
+    throw new Error(err.detail || "Failed to update prompt template");
+  }
+  return res.json();
+}
+
+export async function reimportPromptLibrary(): Promise<{ message: string; count: number }> {
+  const res = await fetch(`${API_BASE}/prompts/import-library`, {
+    method: "POST",
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ detail: res.statusText }));
+    throw new Error(err.detail || "Failed to re-import prompt library");
+  }
+  return res.json();
+}
+

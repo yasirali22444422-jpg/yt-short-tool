@@ -97,3 +97,18 @@ class Character(Base):
     created_at = Column(DateTime(timezone=True), default=utc_now, nullable=False)
 
     project = relationship("Project", back_populates="characters")
+
+
+class PromptTemplate(Base):
+    __tablename__ = "prompt_templates"
+
+    id = Column(String(64), primary_key=True, default=lambda: generate_id("tmpl"))
+    title = Column(String(255), nullable=False)
+    category = Column(String(128), nullable=False)
+    description = Column(Text, nullable=True)
+    source_file = Column(String(255), nullable=True)
+    content = Column(Text, nullable=False)
+    is_default = Column(Boolean, default=False, nullable=False)
+
+    created_at = Column(DateTime(timezone=True), default=utc_now, nullable=False)
+    updated_at = Column(DateTime(timezone=True), default=utc_now, onupdate=utc_now, nullable=False)
