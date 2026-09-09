@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React, { useEffect, useState, use } from "react";
 import Link from "next/link";
@@ -197,12 +197,19 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
               <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold uppercase tracking-wider bg-brand-500/10 text-brand-400 border border-brand-500/20">
                 {project.status.replace("_", " ")}
               </span>
+              {analysisPackage?.content_type && (
+                <span className="px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider bg-brand-500/10 text-brand-400 border border-brand-500/30 flex items-center gap-1.5">
+                  <span className="text-zinc-400">Category:</span>
+                  <span>{analysisPackage.content_type}</span>
+                </span>
+              )}
             </div>
-            <p className="text-xs text-slate-400">
-              ID: <span className="font-mono text-slate-500">{project.id}</span> • Mode:{" "}
-              <span className="capitalize text-slate-300">{project.analysis_mode}</span> • Provider:{" "}
-              <span className="capitalize text-slate-300">{project.provider}</span> ({project.model})
+            <p className="text-xs text-zinc-400">
+              ID: <span className="font-mono text-zinc-500">{project.id}</span> • Mode:{" "}
+              <span className="capitalize text-zinc-300">{project.analysis_mode}</span> • Provider:{" "}
+              <span className="capitalize text-zinc-300">{project.provider}</span> ({project.model})
             </p>
+
           </div>
         </div>
 
@@ -324,8 +331,31 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
       {/* Tab 1: Overview */}
       {activeTab === "overview" && (
         <div className="space-y-6">
+          {/* Reference Video Player */}
+          {project.video && !project.video.source_deleted && (
+            <div className="p-6 rounded-2xl bg-[#121318] border border-[#22232a] space-y-4 shadow-lg">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <Play className="w-4 h-4 text-brand-500 fill-brand-500" />
+                  <h3 className="text-base font-bold text-white">Source Reference Video</h3>
+                </div>
+                <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-brand-500/10 text-brand-400 border border-brand-500/20">
+                  {project.video.original_filename}
+                </span>
+              </div>
+              <div className="w-full aspect-video max-h-[460px] rounded-xl bg-black overflow-hidden border border-[#1f2026] flex items-center justify-center">
+                <video
+                  controls
+                  playsInline
+                  src={`${API_BASE}/projects/${projectId}/video`}
+                  className="w-full h-full object-contain"
+                />
+              </div>
+            </div>
+          )}
+
           {/* Detected Facts Card */}
-          <div className="p-6 rounded-2xl bg-surface-900/60 border border-surface-800 space-y-4">
+          <div className="p-6 rounded-2xl bg-[#121318] border border-[#22232a] space-y-4 shadow-lg">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2.5">
                 <FileVideo className="w-5 h-5 text-brand-400" />
@@ -335,6 +365,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
                 Detected Fact • FFprobe
               </span>
             </div>
+
 
             {meta ? (
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-2">

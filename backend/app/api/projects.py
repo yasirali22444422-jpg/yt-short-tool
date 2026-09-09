@@ -1,6 +1,8 @@
 import json
+from pathlib import Path
 from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.responses import FileResponse
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -11,6 +13,7 @@ from app.schemas.project import ProjectListItem, ProjectResponse, VideoInfo, Vid
 from app.storage.local_storage import storage_manager
 
 router = APIRouter(prefix="/projects", tags=["Projects"])
+
 
 
 def build_video_info(video: Optional[Video]) -> Optional[VideoInfo]:
@@ -103,7 +106,47 @@ async def get_project(
     )
 
 
+@router.get("/{project_id}/video")
+async def get_project_video_stream(
+    project_id: str,
+    db: AsyncSession = Depends(get_db_session),
+):
+    """
+    Streams the uploaded project video file for in-browser playback.
+    """
+    stmt = (
+        select(Project)
+        .options(selectinload(Project.video))
+        .where(Project.id == project_id)
+    )
+    result = await db.execute(stmt)
+    project = result.scalars().first()
+
+    if not project or not project.video or not project.video.file_path:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Video file for project '{project_id}' not found.",
+        )
+
+    file_path = Path(project.video.file_path)
+    if not file_path.is_file():
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Video file on disk not found.",
+        )
+
+    ext = file_path.suffix.lower()
+    media_type = "video/mp4"
+    if ext == ".webm":
+        media_type = "video/webm"
+    elif ext == ".mov":
+        media_type = "video/quicktime"
+
+    return FileResponse(file_path, media_type=media_type)
+
+
 @router.delete("/{project_id}", status_code=status.HTTP_204_NO_CONTENT)
+
 async def delete_project(
     project_id: str,
     db: AsyncSession = Depends(get_db_session),
