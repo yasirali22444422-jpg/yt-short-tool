@@ -1,4 +1,12 @@
-import { Project, ProjectListItem, SystemStatus, UploadResponse } from "@/types";
+import {
+  Project,
+  ProjectListItem,
+  ProviderInfo,
+  SaveKeyPayload,
+  SystemStatus,
+  TestConnectionResponse,
+  UploadResponse,
+} from "@/types";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api";
 
@@ -76,4 +84,53 @@ export function uploadVideoWithProgress(
 
     xhr.send(formData);
   });
+}
+
+export async function fetchProviders(): Promise<ProviderInfo[]> {
+  const res = await fetch(`${API_BASE}/providers`, { cache: "no-store" });
+  if (!res.ok) {
+    throw new Error(`Failed to fetch providers: ${res.statusText}`);
+  }
+  return res.json();
+}
+
+export async function saveProviderKey(
+  provider: string,
+  payload: SaveKeyPayload
+): Promise<ProviderInfo> {
+  const res = await fetch(`${API_BASE}/providers/${provider}/key`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ detail: res.statusText }));
+    throw new Error(err.detail || `Failed to save ${provider} key`);
+  }
+  return res.json();
+}
+
+export async function deleteProviderKey(provider: string): Promise<void> {
+  const res = await fetch(`${API_BASE}/providers/${provider}/key`, {
+    method: "DELETE",
+  });
+  if (!res.ok && res.status !== 204) {
+    throw new Error(`Failed to delete ${provider} key`);
+  }
+}
+
+export async function testProviderConnection(
+  provider: string,
+  payload?: SaveKeyPayload
+): Promise<TestConnectionResponse> {
+  const res = await fetch(`${API_BASE}/providers/${provider}/test`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload || {}),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ detail: res.statusText }));
+    throw new Error(err.detail || `Failed to test ${provider} connection`);
+  }
+  return res.json();
 }

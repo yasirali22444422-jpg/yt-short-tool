@@ -5,6 +5,7 @@ from fastapi.staticfiles import StaticFiles
 
 from app.api.audio import router as audio_router
 from app.api.projects import router as projects_router
+from app.api.providers import router as providers_router
 from app.api.scenes import router as scenes_router
 from app.api.upload import router as upload_router
 from app.config import settings
@@ -43,6 +44,7 @@ app.include_router(upload_router, prefix="/api")
 app.include_router(projects_router, prefix="/api")
 app.include_router(scenes_router, prefix="/api")
 app.include_router(audio_router, prefix="/api")
+app.include_router(providers_router, prefix="/api")
 
 
 @app.get("/api/health", tags=["Health"])

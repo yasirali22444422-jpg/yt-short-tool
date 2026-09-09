@@ -74,3 +74,25 @@ export interface SystemStatus {
   default_provider: string;
   default_model: string;
 }
+
+export interface ProviderInfo {
+  provider: string;
+  name: string;
+  description: string;
+  has_key: boolean;
+  masked_key?: string | null;
+  selected_model: string;
+  available_models: string[];
+}
+
+export interface SaveKeyPayload {
+  api_key?: string;
+  selected_model?: string;
+}
+
+export interface TestConnectionResponse {
+  success: boolean;
+  provider: string;
+  model: string;
+  message: string;
+}
