@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import React, { useEffect, useState, use } from "react";
 import Link from "next/link";
@@ -16,12 +16,21 @@ import {
   AlertCircle,
   FileVideo,
   Eye,
-  Info,
+  Download,
+  Shuffle,
+  Users,
+  Palette,
+  Volume2,
+  FileText,
 } from "lucide-react";
 import SceneTimeline, { SceneData } from "@/components/analysis/SceneTimeline";
 import AudioAnalysisView, { AudioAnalysisData } from "@/components/analysis/AudioAnalysisView";
-import { Project } from "@/types";
+import AnalysisStudioView from "@/components/analysis/AnalysisStudioView";
+import CharacterStyleView from "@/components/analysis/CharacterStyleView";
+import BlueprintExportView from "@/components/analysis/BlueprintExportView";
+import { Project, FullAnalysisPackage } from "@/types";
 import { formatBytes, formatDuration } from "@/lib/utils";
+import { fetchProjectAnalysis, triggerProjectAnalysis, getExportUrl } from "@/lib/api";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api";
 
@@ -33,11 +42,16 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
   const [project, setProject] = useState<Project | null>(null);
   const [scenes, setScenes] = useState<SceneData[]>([]);
   const [audioData, setAudioData] = useState<AudioAnalysisData | null>(null);
-  const [activeTab, setActiveTab] = useState<"overview" | "scenes" | "characters" | "style" | "audio" | "blueprint">("overview");
+  const [analysisPackage, setAnalysisPackage] = useState<FullAnalysisPackage | null>(null);
+
+  const [activeTab, setActiveTab] = useState<
+    "overview" | "scenes" | "studio" | "characters" | "style" | "audio" | "blueprint"
+  >("overview");
 
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
   const [processingAudio, setProcessingAudio] = useState(false);
+  const [analyzingAI, setAnalyzingAI] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const loadData = async () => {
@@ -63,6 +77,14 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
         const aData = await aRes.json();
         setAudioData(aData);
       }
+
+      // 4. Fetch full AI analysis package if available
+      try {
+        const aiData = await fetchProjectAnalysis(projectId);
+        setAnalysisPackage(aiData);
+      } catch {
+        // Analysis not run yet
+      }
     } catch (err: any) {
       setError(err.message || "Failed to load project details.");
     } finally {
@@ -85,7 +107,6 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
         const errJson = await res.json();
         throw new Error(errJson.detail || "Video processing failed.");
       }
-      const data = await res.json();
       await loadData();
       setActiveTab("scenes");
     } catch (err: any) {
@@ -115,6 +136,25 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
     }
   };
 
+  const handleRunAIAnalysis = async () => {
+    setAnalyzingAI(true);
+    setError(null);
+    try {
+      const pkg = await triggerProjectAnalysis(projectId, {
+        provider: project?.provider,
+        model: project?.model,
+        mode: "recreate",
+      });
+      setAnalysisPackage(pkg);
+      await loadData();
+      setActiveTab("studio");
+    } catch (err: any) {
+      setError(err.message || "Failed to run AI Analysis.");
+    } finally {
+      setAnalyzingAI(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="py-24 text-center space-y-3">
@@ -139,7 +179,7 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
   const meta = project.video?.metadata;
 
   return (
-    <div className="space-y-6 pb-12">
+    <div className="space-y-6 pb-16">
       {/* Top Breadcrumb & Action Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-surface-800/80 pb-4">
         <div className="flex items-center gap-3">
@@ -159,13 +199,15 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
               </span>
             </div>
             <p className="text-xs text-slate-400">
-              ID: <span className="font-mono text-slate-500">{project.id}</span> • Mode: <span className="capitalize text-slate-300">{project.analysis_mode}</span> • AI: <span className="capitalize text-slate-300">{project.provider}</span>
+              ID: <span className="font-mono text-slate-500">{project.id}</span> • Mode:{" "}
+              <span className="capitalize text-slate-300">{project.analysis_mode}</span> • Provider:{" "}
+              <span className="capitalize text-slate-300">{project.provider}</span> ({project.model})
             </p>
           </div>
         </div>
 
-        {/* Action Button */}
-        <div className="flex items-center gap-3">
+        {/* Action Buttons */}
+        <div className="flex items-center gap-2.5 flex-wrap">
           <button
             onClick={loadData}
             className="p-2.5 rounded-xl border border-surface-800 bg-surface-900 text-slate-400 hover:text-white transition-colors"
@@ -174,6 +216,39 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
             <RefreshCw className="w-4 h-4" />
           </button>
 
+          {/* Quick Export Dropdown if completed */}
+          {analysisPackage && (
+            <div className="flex items-center gap-1.5 bg-surface-950 p-1 rounded-xl border border-surface-800">
+              <a
+                href={getExportUrl(projectId, "json")}
+                download
+                title="Download Analysis JSON"
+                className="px-2.5 py-1 text-xs font-mono text-slate-400 hover:text-brand-400 transition-colors"
+              >
+                JSON
+              </a>
+              <span className="text-slate-700">|</span>
+              <a
+                href={getExportUrl(projectId, "markdown")}
+                download
+                title="Download Master Blueprint MD"
+                className="px-2.5 py-1 text-xs font-mono text-slate-400 hover:text-indigo-400 transition-colors"
+              >
+                MD
+              </a>
+              <span className="text-slate-700">|</span>
+              <a
+                href={getExportUrl(projectId, "txt")}
+                download
+                title="Download TXT Prompt Book"
+                className="px-2.5 py-1 text-xs font-mono text-slate-400 hover:text-emerald-400 transition-colors"
+              >
+                TXT
+              </a>
+            </div>
+          )}
+
+          {/* Run Initial Video Processing */}
           {project.status === "uploaded" && (
             <button
               onClick={handleProcessVideo}
@@ -187,14 +262,23 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
             </button>
           )}
 
-          {project.status === "frames_extracted" && (
+          {/* Run Full AI Reverse Engineering Analysis */}
+          {scenes.length > 0 && (
             <button
-              onClick={handleProcessVideo}
-              disabled={processing}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-surface-800 bg-surface-900 hover:bg-surface-800 text-slate-300 text-xs font-semibold transition-all"
+              onClick={handleRunAIAnalysis}
+              disabled={analyzingAI}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-brand-600 via-indigo-600 to-purple-600 hover:brightness-110 text-white text-xs font-semibold shadow-md shadow-brand-500/20 transition-all ${
+                analyzingAI ? "opacity-60 cursor-not-allowed" : "active:scale-98"
+              }`}
             >
-              <RefreshCw className={`w-3.5 h-3.5 ${processing ? "animate-spin" : ""}`} />
-              <span>Re-run Extraction</span>
+              <Sparkles className={`w-3.5 h-3.5 ${analyzingAI ? "animate-spin" : ""}`} />
+              <span>
+                {analyzingAI
+                  ? "Analyzing Scenes..."
+                  : analysisPackage
+                  ? "Re-Analyze AI Prompts"
+                  : "Run AI Analysis"}
+              </span>
             </button>
           )}
         </div>
@@ -208,34 +292,39 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
         </div>
       )}
 
-      {/* Tabs Bar */}
+      {/* Tabs Navigation Bar */}
       <div className="flex items-center gap-1 border-b border-surface-800 overflow-x-auto pb-1 text-sm">
         {[
-          { id: "overview", label: "Overview" },
-          { id: "scenes", label: `Scenes (${scenes.length})` },
-          { id: "characters", label: "Characters" },
-          { id: "style", label: "Style DNA" },
-          { id: "audio", label: "Audio" },
-          { id: "blueprint", label: "Master Blueprint" },
-        ].map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id as any)}
-            className={`px-4 py-2.5 rounded-lg font-medium whitespace-nowrap transition-colors ${
-              activeTab === tab.id
-                ? "bg-surface-800 text-white font-semibold"
-                : "text-slate-400 hover:text-slate-200 hover:bg-surface-900"
-            }`}
-          >
-            {tab.label}
-          </button>
-        ))}
+          { id: "overview", label: "Overview", icon: FileVideo },
+          { id: "scenes", label: `Scenes (${scenes.length})`, icon: Layers },
+          { id: "studio", label: "Prompt Studio", icon: Sparkles },
+          { id: "characters", label: "Characters & Props", icon: Users },
+          { id: "style", label: "Style DNA", icon: Palette },
+          { id: "audio", label: "Audio & Dialogue", icon: Volume2 },
+          { id: "blueprint", label: "Master Blueprint & Export", icon: FileText },
+        ].map((tab) => {
+          const Icon = tab.icon;
+          return (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id as any)}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium whitespace-nowrap transition-colors ${
+                activeTab === tab.id
+                  ? "bg-surface-800 text-white font-semibold"
+                  : "text-slate-400 hover:text-slate-200 hover:bg-surface-900"
+              }`}
+            >
+              <Icon className="w-3.5 h-3.5" />
+              <span>{tab.label}</span>
+            </button>
+          );
+        })}
       </div>
 
-      {/* Tab: Overview */}
+      {/* Tab 1: Overview */}
       {activeTab === "overview" && (
         <div className="space-y-6">
-          {/* Section 15 & 47: Detected Technical Facts Card */}
+          {/* Detected Facts Card */}
           <div className="p-6 rounded-2xl bg-surface-900/60 border border-surface-800 space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2.5">
@@ -312,6 +401,28 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
             )}
           </div>
 
+          {/* Quick AI Callout if not run */}
+          {!analysisPackage && scenes.length > 0 && (
+            <div className="p-6 rounded-2xl bg-gradient-to-r from-brand-950/60 to-indigo-950/60 border border-brand-500/20 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="space-y-1">
+                <h4 className="text-sm font-bold text-white flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-brand-400" />
+                  Ready for AI Multimodal Reverse-Engineering
+                </h4>
+                <p className="text-xs text-slate-400">
+                  {scenes.length} scene keyframes and audio cues have been isolated. Generate your production blueprint now.
+                </p>
+              </div>
+              <button
+                onClick={handleRunAIAnalysis}
+                disabled={analyzingAI}
+                className="px-4 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-500 text-white text-xs font-semibold shrink-0"
+              >
+                {analyzingAI ? "Analyzing..." : "Generate AI Prompts & Blueprint"}
+              </button>
+            </div>
+          )}
+
           {/* Quick Scene Preview */}
           {scenes.length > 0 && (
             <div className="space-y-3">
@@ -330,32 +441,83 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
         </div>
       )}
 
-      {/* Tab: Scenes Timeline */}
+      {/* Tab 2: Scene Timeline */}
       {activeTab === "scenes" && (
         <SceneTimeline scenes={scenes} apiBase={API_BASE} />
       )}
 
-      {/* Placeholders for upcoming phases */}
+      {/* Tab 3: Prompt Studio */}
+      {activeTab === "studio" && (
+        analysisPackage ? (
+          <AnalysisStudioView
+            analysis={analysisPackage}
+            projectId={projectId}
+            apiBase={API_BASE}
+            onRefresh={loadData}
+          />
+        ) : (
+          <div className="p-12 text-center rounded-2xl bg-surface-900/40 border border-surface-800 space-y-3">
+            <Sparkles className="w-8 h-8 text-brand-400 mx-auto" />
+            <h3 className="text-base font-semibold text-white">AI Analysis Not Generated Yet</h3>
+            <p className="text-xs text-slate-400 max-w-md mx-auto">
+              Run the AI analysis engine to generate scene-by-scene image prompts, I2V animations, and text-to-video directions.
+            </p>
+            <button
+              onClick={handleRunAIAnalysis}
+              disabled={analyzingAI}
+              className="px-4 py-2 rounded-xl bg-brand-600 hover:bg-brand-500 text-white text-xs font-semibold"
+            >
+              {analyzingAI ? "Analyzing..." : "Run AI Analysis"}
+            </button>
+          </div>
+        )
+      )}
+
+      {/* Tab 4: Character & Object Registry */}
       {activeTab === "characters" && (
-        <div className="p-12 text-center rounded-2xl bg-surface-900/40 border border-surface-800 space-y-2">
-          <Sparkles className="w-8 h-8 text-indigo-400 mx-auto" />
-          <h3 className="text-base font-semibold text-white">Character Bible & Registry</h3>
-          <p className="text-xs text-slate-400 max-w-md mx-auto">
-            Recurring character detection and consistency tracking will be activated in Phase 6.
-          </p>
-        </div>
+        analysisPackage ? (
+          <CharacterStyleView analysis={analysisPackage} />
+        ) : (
+          <div className="p-12 text-center rounded-2xl bg-surface-900/40 border border-surface-800 space-y-3">
+            <Users className="w-8 h-8 text-indigo-400 mx-auto" />
+            <h3 className="text-base font-semibold text-white">Character Bibles Not Built Yet</h3>
+            <p className="text-xs text-slate-400 max-w-md mx-auto">
+              Run the AI analysis to extract character IDs, facial consistency details, and prop registries.
+            </p>
+            <button
+              onClick={handleRunAIAnalysis}
+              disabled={analyzingAI}
+              className="px-4 py-2 rounded-xl bg-brand-600 hover:bg-brand-500 text-white text-xs font-semibold"
+            >
+              Run AI Analysis
+            </button>
+          </div>
+        )
       )}
 
+      {/* Tab 5: Global Style DNA */}
       {activeTab === "style" && (
-        <div className="p-12 text-center rounded-2xl bg-surface-900/40 border border-surface-800 space-y-2">
-          <Sparkles className="w-8 h-8 text-indigo-400 mx-auto" />
-          <h3 className="text-base font-semibold text-white">Global Style DNA</h3>
-          <p className="text-xs text-slate-400 max-w-md mx-auto">
-            Lighting, color palette, medium classification, and visual aesthetics will be synthesized in Phase 5.
-          </p>
-        </div>
+        analysisPackage ? (
+          <CharacterStyleView analysis={analysisPackage} />
+        ) : (
+          <div className="p-12 text-center rounded-2xl bg-surface-900/40 border border-surface-800 space-y-3">
+            <Palette className="w-8 h-8 text-brand-400 mx-auto" />
+            <h3 className="text-base font-semibold text-white">Style DNA Not Synthesized Yet</h3>
+            <p className="text-xs text-slate-400 max-w-md mx-auto">
+              Run the AI analysis to classify visual medium, camera language, and lighting architecture.
+            </p>
+            <button
+              onClick={handleRunAIAnalysis}
+              disabled={analyzingAI}
+              className="px-4 py-2 rounded-xl bg-brand-600 hover:bg-brand-500 text-white text-xs font-semibold"
+            >
+              Run AI Analysis
+            </button>
+          </div>
+        )
       )}
 
+      {/* Tab 6: Audio & Dialogue */}
       {activeTab === "audio" && (
         <AudioAnalysisView
           data={audioData}
@@ -366,14 +528,26 @@ export default function ProjectDetailPage({ params }: { params: Promise<{ id: st
         />
       )}
 
+      {/* Tab 7: Master Blueprint & Export */}
       {activeTab === "blueprint" && (
-        <div className="p-12 text-center rounded-2xl bg-surface-900/40 border border-surface-800 space-y-2">
-          <Sparkles className="w-8 h-8 text-indigo-400 mx-auto" />
-          <h3 className="text-base font-semibold text-white">Master Recreation Blueprint</h3>
-          <p className="text-xs text-slate-400 max-w-md mx-auto">
-            Prompt compiler, multi-target generation prompts, and export options will be compiled in Phase 7.
-          </p>
-        </div>
+        analysisPackage ? (
+          <BlueprintExportView analysis={analysisPackage} projectId={projectId} />
+        ) : (
+          <div className="p-12 text-center rounded-2xl bg-surface-900/40 border border-surface-800 space-y-3">
+            <FileText className="w-8 h-8 text-brand-400 mx-auto" />
+            <h3 className="text-base font-semibold text-white">Master Blueprint Not Generated Yet</h3>
+            <p className="text-xs text-slate-400 max-w-md mx-auto">
+              Run AI Analysis to compile the full recreation blueprint, creative remix studio, and export packages.
+            </p>
+            <button
+              onClick={handleRunAIAnalysis}
+              disabled={analyzingAI}
+              className="px-4 py-2 rounded-xl bg-brand-600 hover:bg-brand-500 text-white text-xs font-semibold"
+            >
+              Run AI Analysis
+            </button>
+          </div>
+        )
       )}
     </div>
   );

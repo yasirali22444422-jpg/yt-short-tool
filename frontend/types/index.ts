@@ -96,3 +96,133 @@ export interface TestConnectionResponse {
   model: string;
   message: string;
 }
+
+export interface CharacterBibleItem {
+  id: string;
+  display_name: string;
+  type: string;
+  gender_presentation: string;
+  estimated_age: string;
+  height_build: string;
+  skin_tone: string;
+  face_shape: string;
+  hair: string;
+  eyes: string;
+  clothing: string[];
+  accessories: string[];
+  distinctive_features: string[];
+  visual_style: string;
+  confidence: number;
+}
+
+export interface ObjectRegistryItem {
+  id: string;
+  name: string;
+  appearance: string;
+  color: string;
+  material: string;
+  shape: string;
+  special_details: string;
+  scene_appearances: string[];
+}
+
+export interface LocationRegistryItem {
+  id: string;
+  name: string;
+  environment: string;
+  architecture: string;
+  weather: string;
+  time_of_day: string;
+  lighting: string;
+  key_landmarks: string[];
+  color_palette: string;
+}
+
+export interface GlobalStyleDNA {
+  medium: string;
+  visual_style: string;
+  color_palette: string;
+  lighting_style: string;
+  texture_style: string;
+  depth_of_field: string;
+  contrast: string;
+  camera_language: string;
+  motion_style: string;
+  editing_pace: string;
+  overall_mood: string;
+}
+
+export interface EditingDNA {
+  editing_pace: string;
+  average_shot_length: number;
+  common_transitions: string[];
+  motion_blur: string;
+  speed_ramping: boolean;
+}
+
+export interface SceneAnalysisData {
+  scene_id: string;
+  scene_number: number;
+  start_time: number;
+  end_time: number;
+  duration: number;
+  characters: string[];
+  objects: string[];
+  location_id: string;
+  scene_summary: string;
+  foreground: string;
+  midground: string;
+  background: string;
+  character_actions: string[];
+  character_poses: string[];
+  facial_expressions: string[];
+  camera_shot: string;
+  camera_angle: string;
+  camera_movement: string;
+  lens_feel: string;
+  composition: string;
+  lighting: string;
+  color_palette: string;
+  subject_motion: string;
+  environment_motion: string;
+  physics: string;
+  vfx: string[];
+  transition_in: string;
+  transition_out: string;
+  dialogue: string[];
+  sound_effects: string[];
+  music_description: string;
+  editing_notes: string;
+  image_prompt: string;
+  animation_prompt: string;
+  text_to_video_prompt: string;
+  negative_prompt: string;
+  confidence: { [key: string]: number };
+  keyframe_urls: string[];
+}
+
+export interface RemixAnalysis {
+  remix_concept: string;
+  target_genre: string;
+  character_mappings: { [key: string]: string };
+  location_mappings: { [key: string]: string };
+  remixed_scenes: any[];
+  remixed_blueprint_markdown: string;
+}
+
+export interface FullAnalysisPackage {
+  project_id: string;
+  mode: string;
+  provider: string;
+  model: string;
+  content_type: string;
+  content_type_confidence: number;
+  global_style: GlobalStyleDNA;
+  editing_dna: EditingDNA;
+  characters: CharacterBibleItem[];
+  objects: ObjectRegistryItem[];
+  locations: LocationRegistryItem[];
+  scenes: SceneAnalysisData[];
+  blueprint_markdown: string;
+  remix_data?: RemixAnalysis | null;
+}

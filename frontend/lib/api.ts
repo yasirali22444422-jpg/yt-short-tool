@@ -3,6 +3,8 @@ import {
   ProjectListItem,
   ProviderInfo,
   SaveKeyPayload,
+  SceneAnalysisData,
+  FullAnalysisPackage,
   SystemStatus,
   TestConnectionResponse,
   UploadResponse,
@@ -133,4 +135,64 @@ export async function testProviderConnection(
     throw new Error(err.detail || `Failed to test ${provider} connection`);
   }
   return res.json();
+}
+
+export async function triggerProjectAnalysis(
+  projectId: string,
+  payload?: { provider?: string; model?: string; mode?: string }
+): Promise<FullAnalysisPackage> {
+  const res = await fetch(`${API_BASE}/projects/${projectId}/analyze`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload || {}),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ detail: res.statusText }));
+    throw new Error(err.detail || "Failed to trigger analysis.");
+  }
+  return res.json();
+}
+
+export async function fetchProjectAnalysis(projectId: string): Promise<FullAnalysisPackage> {
+  const res = await fetch(`${API_BASE}/projects/${projectId}/analysis`, { cache: "no-store" });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ detail: res.statusText }));
+    throw new Error(err.detail || "Failed to fetch analysis package.");
+  }
+  return res.json();
+}
+
+export async function regenerateScenePrompts(
+  projectId: string,
+  sceneNum: number
+): Promise<SceneAnalysisData> {
+  const res = await fetch(`${API_BASE}/projects/${projectId}/scenes/${sceneNum}/regenerate`, {
+    method: "POST",
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ detail: res.statusText }));
+    throw new Error(err.detail || `Failed to regenerate Scene ${sceneNum}`);
+  }
+  return res.json();
+}
+
+export async function updateSceneAnalysis(
+  projectId: string,
+  sceneNum: number,
+  updates: Partial<SceneAnalysisData>
+): Promise<SceneAnalysisData> {
+  const res = await fetch(`${API_BASE}/projects/${projectId}/scenes/${sceneNum}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(updates),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ detail: res.statusText }));
+    throw new Error(err.detail || `Failed to update Scene ${sceneNum}`);
+  }
+  return res.json();
+}
+
+export function getExportUrl(projectId: string, format: "json" | "markdown" | "txt"): string {
+  return `${API_BASE}/projects/${projectId}/export?format=${format}`;
 }
