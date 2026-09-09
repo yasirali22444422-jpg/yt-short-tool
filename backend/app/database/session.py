@@ -24,6 +24,9 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
         yield session
 
 
+from sqlalchemy import text
+
+
 async def init_db() -> None:
     # Ensure data directory exists
     settings.init_directories()
@@ -32,3 +35,9 @@ async def init_db() -> None:
 
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+
+        # Safe non-destructive migration: preserve all existing data while adding new columns
+        res = await conn.execute(text("PRAGMA table_info(projects)"))
+        columns = [row[1] for row in res.fetchall()]
+        if "audio_json" not in columns:
+            await conn.execute(text("ALTER TABLE projects ADD COLUMN audio_json TEXT"))
