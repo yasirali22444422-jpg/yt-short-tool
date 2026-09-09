@@ -25,6 +25,9 @@ class Project(Base):
     model = Column(String(64), default="gemini-2.5-flash", nullable=False)
     error_message = Column(Text, nullable=True)
     audio_json = Column(Text, nullable=True)
+    analysis_json = Column(Text, nullable=True)
+    blueprint_markdown = Column(Text, nullable=True)
+    remix_json = Column(Text, nullable=True)
 
     created_at = Column(DateTime(timezone=True), default=utc_now, nullable=False)
     updated_at = Column(DateTime(timezone=True), default=utc_now, onupdate=utc_now, nullable=False)

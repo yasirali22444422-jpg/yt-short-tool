@@ -41,3 +41,9 @@ async def init_db() -> None:
         columns = [row[1] for row in res.fetchall()]
         if "audio_json" not in columns:
             await conn.execute(text("ALTER TABLE projects ADD COLUMN audio_json TEXT"))
+        if "analysis_json" not in columns:
+            await conn.execute(text("ALTER TABLE projects ADD COLUMN analysis_json TEXT"))
+        if "blueprint_markdown" not in columns:
+            await conn.execute(text("ALTER TABLE projects ADD COLUMN blueprint_markdown TEXT"))
+        if "remix_json" not in columns:
+            await conn.execute(text("ALTER TABLE projects ADD COLUMN remix_json TEXT"))
